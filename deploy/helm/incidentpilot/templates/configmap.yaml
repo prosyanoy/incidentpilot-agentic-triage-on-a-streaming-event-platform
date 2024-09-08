@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  labels: {{- include "ip.labels" . | nindent 4 }}
+data:
+  INCIDENTPILOT_BUS_URL: "nats://{{ .Release.Name }}-nats:4222"
+  INCIDENTPILOT_LLM: {{ .Values.llm.backend | quote }}
+  INCIDENTPILOT_DB_PATH: "/data/incidentpilot.duckdb"
+  OLLAMA_URL: {{ include "ip.ollamaUrl" . | quote }}
+  OLLAMA_MODEL: {{ .Values.llm.ollama.model | quote }}

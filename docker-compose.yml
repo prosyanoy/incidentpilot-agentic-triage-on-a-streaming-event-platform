@@ -1,0 +1,41 @@
+# Local stack without Kubernetes: NATS + API/agent (+ generator, + optional Ollama).
+#   docker compose up --build                 # API on http://localhost:8000
+#   docker compose --profile generate up      # also replay a failure scenario
+#   docker compose --profile ollama up        # use a local Ollama instead of the mock LLM
+services:
+  nats:
+    image: nats:2.10-alpine
+    ports: ["4222:4222"]
+
+  api:
+    build: .
+    ports: ["8000:8000"]
+    environment:
+      INCIDENTPILOT_BUS_URL: nats://nats:4222
+      INCIDENTPILOT_LLM: ${INCIDENTPILOT_LLM:-mock}
+      OLLAMA_URL: ${OLLAMA_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.1:8b}
+      INCIDENTPILOT_DB_PATH: /data/incidentpilot.duckdb
+    volumes: ["incidentpilot-data:/data"]
+    depends_on: [nats]
+
+  generator:
+    build: .
+    profiles: ["generate"]
+    command: ["incidentpilot", "publish"]
+    environment:
+      INCIDENTPILOT_BUS_URL: nats://nats:4222
+      INCIDENTPILOT_SCENARIO: ${INCIDENTPILOT_SCENARIO:-bad_deploy}
+      INCIDENTPILOT_SEED: ${INCIDENTPILOT_SEED:-7}
+      INCIDENTPILOT_SPEED: ${INCIDENTPILOT_SPEED:-20}
+    depends_on: [api]
+
+  ollama:
+    image: ollama/ollama:latest
+    profiles: ["ollama"]
+    ports: ["11434:11434"]
+    volumes: ["ollama-models:/root/.ollama"]
+
+volumes:
+  incidentpilot-data:
+  ollama-models:

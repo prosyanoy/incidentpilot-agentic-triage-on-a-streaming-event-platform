@@ -1,0 +1,29 @@
+image:
+  repository: incidentpilot
+  tag: dev
+  pullPolicy: IfNotPresent
+
+llm:
+  backend: mock            # mock | ollama
+  ollama:
+    enabled: false         # deploy an in-cluster Ollama (needs a model pull, see README)
+    model: llama3.1:8b
+    image: ollama/ollama:latest
+
+nats:
+  image: nats:2.10-alpine
+
+api:
+  service:
+    type: NodePort
+    port: 8000
+    nodePort: 30080
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { memory: 1Gi }
+
+generator:
+  enabled: true
+  scenario: bad_deploy     # see `incidentpilot simulate --help` for all scenarios
+  seed: 7
+  speed: 20                # x real time

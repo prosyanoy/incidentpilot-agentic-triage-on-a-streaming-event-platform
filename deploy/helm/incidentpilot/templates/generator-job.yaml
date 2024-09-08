@@ -1,0 +1,33 @@
+{{- if .Values.generator.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  # Revision suffix: Jobs are immutable, so every `helm upgrade` replays a fresh scenario.
+  name: {{ .Release.Name }}-generator-{{ .Release.Revision }}
+  labels: {{- include "ip.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels: { app: {{ .Release.Name }}-generator }
+    spec:
+      restartPolicy: OnFailure
+      securityContext: { runAsUser: 10001, runAsNonRoot: true }
+      initContainers:
+        # core NATS drops messages nobody subscribes to yet, so wait for the consumer
+        - name: wait-for-api
+          image: {{ include "ip.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["incidentpilot", "wait", "--url", "http://{{ .Release.Name }}-api:8000", "--timeout", "180"]
+      containers:
+        - name: generator
+          image: {{ include "ip.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: ["incidentpilot", "publish"]
+          env:
+            - { name: INCIDENTPILOT_BUS_URL, value: "nats://{{ .Release.Name }}-nats:4222" }
+            - { name: INCIDENTPILOT_SCENARIO, value: {{ .Values.generator.scenario | quote }} }
+            - { name: INCIDENTPILOT_SEED, value: {{ .Values.generator.seed | quote }} }
+            - { name: INCIDENTPILOT_SPEED, value: {{ .Values.generator.speed | quote }} }
+{{- end }}

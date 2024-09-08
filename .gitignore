@@ -1,0 +1,17 @@
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+.env
+.env.*
+!.env.example
+*.duckdb
+*.duckdb.wal
+data/
+eval_results.json
+*.tgz

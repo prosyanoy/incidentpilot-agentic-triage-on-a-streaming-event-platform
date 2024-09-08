@@ -1,0 +1,32 @@
+{{- if .Values.llm.ollama.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-ollama
+  labels: {{- include "ip.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: {{ .Release.Name }}-ollama }
+  template:
+    metadata:
+      labels: { app: {{ .Release.Name }}-ollama }
+    spec:
+      containers:
+        - name: ollama
+          image: {{ .Values.llm.ollama.image }}
+          ports: [{ containerPort: 11434 }]
+          volumeMounts: [{ name: models, mountPath: /root/.ollama }]
+      volumes:
+        - name: models
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-ollama
+  labels: {{- include "ip.labels" . | nindent 4 }}
+spec:
+  selector: { app: {{ .Release.Name }}-ollama }
+  ports: [{ port: 11434, targetPort: 11434 }]
+{{- end }}

@@ -1,0 +1,6 @@
+apiVersion: v2
+name: incidentpilot
+description: Agentic incident triage on a streaming event platform (NATS + DuckDB + LLM agent)
+type: application
+version: 0.1.0
+appVersion: "0.1.0"

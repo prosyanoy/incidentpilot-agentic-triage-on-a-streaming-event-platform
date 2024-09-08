@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-nats
+  labels: {{- include "ip.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: {{ .Release.Name }}-nats }
+  template:
+    metadata:
+      labels: { app: {{ .Release.Name }}-nats }
+    spec:
+      containers:
+        - name: nats
+          image: {{ .Values.nats.image }}
+          ports: [{ containerPort: 4222 }]
+          readinessProbe:
+            tcpSocket: { port: 4222 }
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-nats
+  labels: {{- include "ip.labels" . | nindent 4 }}
+spec:
+  selector: { app: {{ .Release.Name }}-nats }
+  ports: [{ port: 4222, targetPort: 4222 }]
